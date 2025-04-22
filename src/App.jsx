@@ -3,21 +3,16 @@ import Webcam from "react-webcam";
 
 function App() {
   const webcamRef = useRef(null);
-  const [facingMode, setFacingMode] = useState("user"); // 'user' = front cam, 'environment' = back cam
   const [photo, setPhoto] = useState(null);
 
   const videoConstraints = {
-    facingMode: facingMode,
+    facingMode: "user", // always front camera
   };
 
   const capture = useCallback(() => {
     const imageSrc = webcamRef.current.getScreenshot();
     setPhoto(imageSrc);
   }, [webcamRef]);
-
-  const flipCamera = () => {
-    setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
-  };
 
   return (
     <div style={{
@@ -32,19 +27,21 @@ function App() {
       {!photo ? (
         <>
           <Webcam
-              key={facingMode}  // 👈 this forces re-render
-              audio={false}
-              ref={webcamRef}
-              screenshotFormat="image/jpeg"
-              videoConstraints={{ facingMode }}
-              style={{ borderRadius: '20px', marginTop: '1rem', width: '100%', maxWidth: '400px' }}
-            />
-
+            audio={false}
+            ref={webcamRef}
+            screenshotFormat="image/jpeg"
+            videoConstraints={videoConstraints}
+            style={{
+              borderRadius: '20px',
+              marginTop: '1rem',
+              width: '100%',
+              maxWidth: '400px',
+              transform: 'scaleX(-1)' // ← this mirrors the video
+            }}
+            
+          />
           <div style={{ marginTop: '1rem' }}>
             <button onClick={capture} style={buttonStyle}>📷 Take Photo</button>
-            <button onClick={flipCamera} style={{ ...buttonStyle, marginLeft: '1rem' }}>
-              🔄 Flip Camera
-            </button>
           </div>
         </>
       ) : (
