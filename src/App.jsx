@@ -5,6 +5,8 @@ function App() {
   const webcamRef = useRef(null);
   const [photos, setPhotos] = useState([]);
   const [countdown, setCountdown] = useState(0);
+  const [currentPhoto, setCurrentPhoto] = useState(null);
+  const [showFlash, setShowFlash] = useState(false);
 
   const videoConstraints = {
     facingMode: "user",
@@ -13,34 +15,43 @@ function App() {
   const handleTakePhotoStrip = () => {
     let countdownStart = 3;
     let tempPhotos = [];
-  
+
     const takeSinglePhoto = (delay) => {
       setTimeout(() => {
         let count = countdownStart;
         setCountdown(count);
+
         const countdownInterval = setInterval(() => {
           count--;
+
+          // Blink!
+          setShowFlash(true);
+          setTimeout(() => setShowFlash(false), 100);
+
           if (count === 0) {
             clearInterval(countdownInterval);
             setCountdown(0);
             const imageSrc = webcamRef.current.getScreenshot();
             tempPhotos.push(imageSrc);
-  
-            if (tempPhotos.length === 3) {
-              setPhotos(tempPhotos);
-            }
+            setCurrentPhoto(imageSrc);
+
+            setTimeout(() => {
+              setCurrentPhoto(null);
+              if (tempPhotos.length === 3) {
+                setPhotos(tempPhotos);
+              }
+            }, 1000);
           } else {
             setCountdown(count);
           }
         }, 1000);
       }, delay);
     };
-  
-    takeSinglePhoto(0);      // First photo immediately
-    takeSinglePhoto(4000);   // Second photo after 4s
-    takeSinglePhoto(8000);   // Third photo after 8s
+
+    takeSinglePhoto(0);
+    takeSinglePhoto(4000);
+    takeSinglePhoto(8000);
   };
-  
 
   return (
     <div
@@ -50,9 +61,43 @@ function App() {
         padding: "2rem",
         backgroundColor: "#fff0f5",
         minHeight: "100vh",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
       <h1>📸 Cute Photobooth</h1>
+
+      {showFlash && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "white",
+            opacity: 0.7,
+            zIndex: 999,
+          }}
+        />
+      )}
+
+      {currentPhoto && (
+        <img
+          src={currentPhoto}
+          alt="Preview"
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%) scaleX(-1)",
+            borderRadius: "10px",
+            width: "100%",
+            maxWidth: "300px",
+            zIndex: 1000,
+          }}
+        />
+      )}
 
       {countdown > 0 && (
         <div style={{ fontSize: "3rem", marginTop: "1rem" }}>{countdown}</div>
@@ -70,43 +115,38 @@ function App() {
               marginTop: "1rem",
               width: "100%",
               maxWidth: "400px",
-              transform: "scaleX(-1)", // mirror it!
+              transform: "scaleX(-1)",
             }}
           />
           <div style={{ marginTop: "1rem" }}>
-            <button onClick={handleTakePhoto} style={buttonStyle}>
-              📷 Take Photo
+            <button onClick={handleTakePhotoStrip} style={buttonStyle}>
+              📷 Take 3-Photo Strip
             </button>
           </div>
         </>
       ) : (
         <>
-          <div style={{ marginTop: '1rem' }}>
+          <div style={{ marginTop: "1rem" }}>
             {photos.map((p, i) => (
               <img
                 key={i}
                 src={p}
                 alt={`Captured ${i + 1}`}
                 style={{
-                  borderRadius: '10px',
-                  margin: '0.5rem 0',
-                  width: '100%',
-                  maxWidth: '300px',
-                  transform: 'scaleX(-1)'
+                  borderRadius: "10px",
+                  margin: "0.5rem 0",
+                  width: "100%",
+                  maxWidth: "300px",
+                  transform: "scaleX(-1)",
                 }}
               />
             ))}
-            <div style={{ marginTop: '1rem' }}>
-            <button onClick={handleTakePhotoStrip} style={buttonStyle}>
-              📸 Take 3-Photo Strip
-            </button>
-
-            </div>
           </div>
 
           <div style={{ marginTop: "1rem" }}>
-            <button onClick={() => setPhoto(null)}style={{ ...buttonStyle, marginRight: '1rem' }}> 🔁 Retake</button>
-            <a href={photo} download="cute-photo.jpg" style={{ ...buttonStyle, textDecoration: 'none' }}> 💾 Download</a>
+            <button onClick={() => setPhotos([])} style={buttonStyle}>
+              🔁 Retake Strip
+            </button>
           </div>
         </>
       )}
