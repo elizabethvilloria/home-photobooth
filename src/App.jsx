@@ -1,27 +1,27 @@
+import { useRef } from "react";
+import Webcam from "react-webcam";
+
 function App() {
+  const webcamRef = useRef(null);
+
   return (
     <div style={{
       textAlign: 'center',
       fontFamily: 'cursive',
       padding: '2rem',
       backgroundColor: '#fff0f5',
-      height: '100vh'
+      minHeight: '100vh'
     }}>
       <h1>📸 Cute Photobooth</h1>
-      <p>Let’s make memories ✨</p>
-      <button style={{
-        padding: '1rem 2rem',
-        fontSize: '1rem',
-        borderRadius: '10px',
-        border: 'none',
-        backgroundColor: '#ffb6c1',
-        color: 'white',
-        cursor: 'pointer'
-      }}>
-        Start!
-      </button>
+      <Webcam
+        audio={false}
+        ref={webcamRef}
+        screenshotFormat="image/jpeg"
+        style={{ borderRadius: '20px', marginTop: '1rem' }}
+      />
+      <p style={{ marginTop: '1rem' }}>Say cheese! 🧀</p>
     </div>
-  )
+  );
 }
 
 export default App;
