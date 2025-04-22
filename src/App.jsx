@@ -32,12 +32,14 @@ function App() {
       {!photo ? (
         <>
           <Webcam
-            audio={false}
-            ref={webcamRef}
-            screenshotFormat="image/jpeg"
-            videoConstraints={videoConstraints}
-            style={{ borderRadius: '20px', marginTop: '1rem', width: '100%', maxWidth: '400px' }}
-          />
+              key={facingMode}  // 👈 this forces re-render
+              audio={false}
+              ref={webcamRef}
+              screenshotFormat="image/jpeg"
+              videoConstraints={{ facingMode }}
+              style={{ borderRadius: '20px', marginTop: '1rem', width: '100%', maxWidth: '400px' }}
+            />
+
           <div style={{ marginTop: '1rem' }}>
             <button onClick={capture} style={buttonStyle}>📷 Take Photo</button>
             <button onClick={flipCamera} style={{ ...buttonStyle, marginLeft: '1rem' }}>
