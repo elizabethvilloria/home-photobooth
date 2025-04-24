@@ -12,6 +12,7 @@ function App() {
   const [isShooting, setIsShooting] = useState(false);
   const [showFlash, setShowFlash] = useState(false);
 
+  
   const videoConstraints = {
     facingMode: "user",
   };
