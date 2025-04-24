@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import Webcam from "react-webcam";
 import { toPng } from "html-to-image";
+import confetti from "canvas-confetti";
 
 function App() {
   const webcamRef = useRef(null);
@@ -32,7 +33,6 @@ function App() {
           clearInterval(countdownInterval);
           setCountdown(0);
 
-          // Flash just the webcam area
           setShowFlash(true);
           setTimeout(() => setShowFlash(false), 100);
 
@@ -50,6 +50,11 @@ function App() {
             }, 1000);
           } else {
             setIsShooting(false);
+
+            // 🎉 Confetti!
+            confetti();
+            setTimeout(() => confetti(), 300);
+            setTimeout(() => confetti(), 600);
           }
         }
       }, 1000);
