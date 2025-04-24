@@ -1,9 +1,11 @@
 import { useRef, useState } from "react";
 import Webcam from "react-webcam";
+import { toPng } from "html-to-image";
 
 function App() {
   const webcamRef = useRef(null);
-  const [photos, setPhotos] = useState([null, null, null]); // Pre-fill with 3 slots
+  const stripRef = useRef(null);
+  const [photos, setPhotos] = useState([null, null, null]);
   const [countdown, setCountdown] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isShooting, setIsShooting] = useState(false);
@@ -30,7 +32,7 @@ function App() {
           clearInterval(countdownInterval);
           setCountdown(0);
 
-          // Flash only the webcam area
+          // Flash just the webcam area
           setShowFlash(true);
           setTimeout(() => setShowFlash(false), 100);
 
@@ -45,7 +47,7 @@ function App() {
             setTimeout(() => {
               setCurrentIndex((i) => i + 1);
               snapNextPhoto(index + 1);
-            }, 1000); // Wait 1s before next countdown
+            }, 1000);
           } else {
             setIsShooting(false);
           }
@@ -55,6 +57,17 @@ function App() {
 
     setCurrentIndex(0);
     snapNextPhoto(0);
+  };
+
+  const handleDownloadStrip = () => {
+    if (stripRef.current) {
+      toPng(stripRef.current).then((dataUrl) => {
+        const link = document.createElement("a");
+        link.download = "cute-photobooth-strip.png";
+        link.href = dataUrl;
+        link.click();
+      });
+    }
   };
 
   return (
@@ -115,7 +128,16 @@ function App() {
         </>
       ) : (
         <>
-          <div style={{ marginTop: "1rem" }}>
+          <div ref={stripRef} style={{ marginTop: "1rem" }}>
+            <h2
+              style={{
+                marginBottom: "1rem",
+                fontFamily: "cursive",
+                color: "#ff69b4",
+              }}
+            >
+              Cute Photobooth 💕
+            </h2>
             {photos.map((p, i) => (
               <div
                 key={i}
@@ -156,6 +178,12 @@ function App() {
           <div style={{ marginTop: "1rem" }}>
             <button onClick={handleTakePhotoStrip} style={buttonStyle}>
               🔁 Retake Strip
+            </button>
+            <button
+              onClick={handleDownloadStrip}
+              style={{ ...buttonStyle, marginLeft: "1rem" }}
+            >
+              💾 Download Strip
             </button>
           </div>
         </>
