@@ -3,9 +3,10 @@ import Webcam from "react-webcam";
 
 function App() {
   const webcamRef = useRef(null);
-  const [photos, setPhotos] = useState([]);
+  const [photos, setPhotos] = useState([null, null, null]); // Pre-fill with 3 slots
   const [countdown, setCountdown] = useState(0);
-  const [currentPhoto, setCurrentPhoto] = useState(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isShooting, setIsShooting] = useState(false);
   const [showFlash, setShowFlash] = useState(false);
 
   const videoConstraints = {
@@ -13,44 +14,47 @@ function App() {
   };
 
   const handleTakePhotoStrip = () => {
-    let countdownStart = 3;
-    let tempPhotos = [];
+    setPhotos([null, null, null]);
+    setIsShooting(true);
+    let count = 3;
 
-    const takeSinglePhoto = (delay) => {
-      setTimeout(() => {
-        let count = countdownStart;
-        setCountdown(count);
+    const snapNextPhoto = (index) => {
+      setCountdown(3);
 
-        const countdownInterval = setInterval(() => {
-          count--;
+      const countdownInterval = setInterval(() => {
+        count--;
 
-          // Blink!
+        if (count > 0) {
+          setCountdown(count);
+        } else {
+          clearInterval(countdownInterval);
+          setCountdown(0);
+
+          // Flash only the webcam area
           setShowFlash(true);
           setTimeout(() => setShowFlash(false), 100);
 
-          if (count === 0) {
-            clearInterval(countdownInterval);
-            setCountdown(0);
-            const imageSrc = webcamRef.current.getScreenshot();
-            tempPhotos.push(imageSrc);
-            setCurrentPhoto(imageSrc);
+          const imageSrc = webcamRef.current.getScreenshot();
+          setPhotos((prev) => {
+            const updated = [...prev];
+            updated[index] = imageSrc;
+            return updated;
+          });
 
+          if (index < 2) {
             setTimeout(() => {
-              setCurrentPhoto(null);
-              if (tempPhotos.length === 3) {
-                setPhotos(tempPhotos);
-              }
-            }, 1000);
+              setCurrentIndex((i) => i + 1);
+              snapNextPhoto(index + 1);
+            }, 1000); // Wait 1s before next countdown
           } else {
-            setCountdown(count);
+            setIsShooting(false);
           }
-        }, 1000);
-      }, delay);
+        }
+      }, 1000);
     };
 
-    takeSinglePhoto(0);
-    takeSinglePhoto(4000);
-    takeSinglePhoto(8000);
+    setCurrentIndex(0);
+    snapNextPhoto(0);
   };
 
   return (
@@ -61,90 +65,96 @@ function App() {
         padding: "2rem",
         backgroundColor: "#fff0f5",
         minHeight: "100vh",
-        position: "relative",
-        overflow: "hidden",
       }}
     >
       <h1>📸 Cute Photobooth</h1>
-
-      {showFlash && (
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            backgroundColor: "white",
-            opacity: 0.7,
-            zIndex: 999,
-          }}
-        />
-      )}
-
-      {currentPhoto && (
-        <img
-          src={currentPhoto}
-          alt="Preview"
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%) scaleX(-1)",
-            borderRadius: "10px",
-            width: "100%",
-            maxWidth: "300px",
-            zIndex: 1000,
-          }}
-        />
-      )}
 
       {countdown > 0 && (
         <div style={{ fontSize: "3rem", marginTop: "1rem" }}>{countdown}</div>
       )}
 
-      {photos.length === 0 ? (
+      {photos.every((p) => p === null) || isShooting ? (
         <>
-          <Webcam
-            audio={false}
-            ref={webcamRef}
-            screenshotFormat="image/jpeg"
-            videoConstraints={videoConstraints}
-            style={{
-              borderRadius: "20px",
-              marginTop: "1rem",
-              width: "100%",
-              maxWidth: "400px",
-              transform: "scaleX(-1)",
-            }}
-          />
-          <div style={{ marginTop: "1rem" }}>
-            <button onClick={handleTakePhotoStrip} style={buttonStyle}>
-              📷 Take 3-Photo Strip
-            </button>
+          <div style={{ position: "relative", display: "inline-block" }}>
+            <Webcam
+              audio={false}
+              ref={webcamRef}
+              screenshotFormat="image/jpeg"
+              videoConstraints={videoConstraints}
+              style={{
+                borderRadius: "20px",
+                marginTop: "1rem",
+                width: "100%",
+                maxWidth: "400px",
+                transform: "scaleX(-1)",
+              }}
+            />
+            {showFlash && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  backgroundColor: "white",
+                  opacity: 0.7,
+                  borderRadius: "20px",
+                }}
+              />
+            )}
           </div>
+
+          {!isShooting && (
+            <div style={{ marginTop: "1rem" }}>
+              <button onClick={handleTakePhotoStrip} style={buttonStyle}>
+                📷 Take 3-Photo Strip
+              </button>
+            </div>
+          )}
         </>
       ) : (
         <>
           <div style={{ marginTop: "1rem" }}>
             {photos.map((p, i) => (
-              <img
+              <div
                 key={i}
-                src={p}
-                alt={`Captured ${i + 1}`}
                 style={{
-                  borderRadius: "10px",
-                  margin: "0.5rem 0",
                   width: "100%",
                   maxWidth: "300px",
-                  transform: "scaleX(-1)",
+                  margin: "0.5rem auto",
+                  borderRadius: "10px",
+                  backgroundColor: "#fff",
+                  boxShadow: "0 0 8px rgba(0,0,0,0.1)",
                 }}
-              />
+              >
+                {p ? (
+                  <img
+                    src={p}
+                    alt={`Photo ${i + 1}`}
+                    style={{
+                      width: "100%",
+                      borderRadius: "10px",
+                      transform: "scaleX(-1)",
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      padding: "4rem 0",
+                      color: "#aaa",
+                      fontStyle: "italic",
+                    }}
+                  >
+                    Waiting...
+                  </div>
+                )}
+              </div>
             ))}
           </div>
 
           <div style={{ marginTop: "1rem" }}>
-            <button onClick={() => setPhotos([])} style={buttonStyle}>
+            <button onClick={handleTakePhotoStrip} style={buttonStyle}>
               🔁 Retake Strip
             </button>
           </div>
